@@ -73,7 +73,7 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
          */
         //backBuffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        tileMap = new TileMap("testmap.txt", 32);
+        tileMap = new TileMap(new Maze(3,64), 32);
         buffered2Dmap = new BufferedImage(
                 tileMap.getWidth() * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize(),
                 BufferedImage.TYPE_3BYTE_BGR);

@@ -1,3 +1,10 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+
 import java.util.Random;
 import java.util.Stack;
 /**
@@ -7,11 +14,11 @@ import java.util.Stack;
 public class Maze {
     private int maze[][][][];
     private int dimension = 0;
-    private int size = 16; //wartość domyślna
-    private int cubeDen = 0; //ilość przejść między piętrami sześcianu
-    private int cubeDenDelta = 0; //odchylenie w ilości przejść między piętrami
-    private int tessDen = 0; //ilość przejść między sześcianami
-    private int tessDenDelta = 0; //odchylenie w ilości przejść między sześcianami
+    private int size = 17; //wartość domyślna
+    private int cubeDen = 1; //ilość przejść między piętrami sześcianu
+    private int cubeDenDelta = 1; //odchylenie w ilości przejść między piętrami
+    private int tessDen = 1; //ilość przejść między sześcianami
+    private int tessDenDelta = 1; //odchylenie w ilości przejść między sześcianami
     
     public static final int CUBENUMBER = 8;//ilość sześcianów w tesserakcie
     public static final int FLOOR = 1;
@@ -28,15 +35,17 @@ public class Maze {
         else if (dimension > 4) this.dimension = 4;
         else this.dimension = dimension;
         
-        if (size < 3) this.size = 3;
+        if (size < 5) this.size = 5;
+        else if (size%2 == 0) this.size = size-1;
         else this.size = size;
-        maze = new int[dimension==4 ? size : 1][dimension>=3 ? size : 1][size][size];
-        if (transistionDensity.length > 0) cubeDen = transistionDensity[0]<size ? transistionDensity[0] : size-1;
-        else cubeDen = (cubeDen=(int)(size*size/128))>0 ? cubeDen : 1;
+        maze = new int[dimension==4 ? this.size : 1][dimension>=3 ? this.size : 1][this.size][this.size];
+        
+        if (transistionDensity.length > 0) cubeDen = transistionDensity[0]<this.size ? transistionDensity[0] : this.size-1;
+        else cubeDen = ((cubeDen=(int)(this.size*this.size/128))>0) ? cubeDen : 1;
         if (transistionDensity.length > 1) cubeDenDelta = transistionDensity[1]<cubeDen ? transistionDensity[1] : cubeDen-1;
         else cubeDenDelta = (int)(cubeDen/2);
-        if (transistionDensity.length > 2) tessDen = transistionDensity[2]<size ? transistionDensity[2] : size-1;
-        else tessDen = (cubeDen=(int)(size*size/128))>0 ? cubeDen : 1;
+        if (transistionDensity.length > 2) tessDen = transistionDensity[2]<this.size ? transistionDensity[2] : this.size-1;
+        else tessDen = (tessDen=(int)(this.size*this.size/128))>0 ? tessDen : 1;
         if (transistionDensity.length > 3) tessDenDelta = transistionDensity[3]<cubeDen ? transistionDensity[3] : cubeDen-1;
         else tessDenDelta = (int)(tessDen/2);
         generateColumns();
@@ -44,6 +53,9 @@ public class Maze {
         if (dimension == 4) generate4DTransition();
         generateCorridors();
     }
+    /*public Maze (int array[][][][]) {
+        if (array[].)
+    }*/
     
     private void generateColumns() {
         int cubeNum = (dimension==4) ? 8 : 1;
@@ -73,14 +85,18 @@ public class Maze {
         int cubeNum = (dimension==4) ? 8 : 1;
         for (int i0=0; i0<cubeNum; i0++) {//cubes
             for (int i1=0; i1<size-1; i1++) {//levels
-                cd = cubeDen - cubeDenDelta + rnd.nextInt(2*cubeDenDelta);
+                if (cubeDenDelta > 0)
+                    cd = cubeDen - cubeDenDelta + rnd.nextInt(2*cubeDenDelta);
+                else
+                    cd = cubeDen;
                 for (int i=0; i<cd; i++) {
                     int x = rnd.nextInt(size);
                     int y = rnd.nextInt(size);
                     if (x%2 == 0) x++;
                     if (y%2 == 0) y++;
-                    if (x == size) x = 1;
+                    if (x == size) x = 3;
                     if (y == size) y = 1;
+                    if (x==1 && y==1) x+=2;
                     if (maze[i0][i1][x][y]==-DOWN || maze[i0][i1][x][y]==-UP) {
                         i--; continue;
                     }
@@ -92,7 +108,11 @@ public class Maze {
     }
     private void generate4DTransition() {
         Random rnd = new Random();
-        int td = tessDen - tessDenDelta + rnd.nextInt(2*tessDenDelta);
+        int td;
+            if (tessDenDelta > 0) 
+                td = tessDen - tessDenDelta + rnd.nextInt(2*tessDenDelta);
+            else 
+                td = tessDen;
         for (int a=0; a<CUBENUMBER-1; a++)//łączymy sześcian a
             for (int b=a+1; b<CUBENUMBER; b++) {//z sześcianem b
                 if (b == inverse(a)) continue;
@@ -320,6 +340,10 @@ public class Maze {
             default:
                 return null;
         }
+    }
+    
+    public int getSize() {
+        return size;
     }
     
     public static void main(String[] args) {

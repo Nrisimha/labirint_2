@@ -217,7 +217,11 @@ class View3D extends JPanel {
         if (tileMap.getTile(
                 (int) ((cameraPosition.y + d * c) / tileMap.getTileSize()),//x and y swiped?!
                 (int) ((cameraPosition.x + d * s) / tileMap.getTileSize()))
-                != 0) {
+                != tileMap.hardWall &&
+                tileMap.getTile(
+                (int) ((cameraPosition.y + d * c) / tileMap.getTileSize()),//x and y swiped?!
+                (int) ((cameraPosition.x + d * s) / tileMap.getTileSize()))
+                !=tileMap.wall) {
             cameraPosition.x += d * s;
             cameraPosition.y += d * c;
         }

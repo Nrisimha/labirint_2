@@ -186,11 +186,17 @@ public class Player {
                 JOptionPane.showMessageDialog(null, "No  next level here!");
             }
         }
+        else if(tileMap.getTile(row,col)==tileMap.downTeleport && teleportType==tileMap.upTeleport){
+            JOptionPane.showMessageDialog(null, "No up portal here!");
+        }
         else if(tileMap.getTile(row,col)==tileMap.downTeleport && teleportType==tileMap.downTeleport){
             if(tileMap.loadPreviousLevel()==false){
                 JOptionPane.showMessageDialog(null, "No  previous level here!");
             }
         }
+        else if(tileMap.getTile(row,col)==tileMap.upTeleport && teleportType==tileMap.downTeleport){
+            JOptionPane.showMessageDialog(null, "No down portal here!");
+        }   
         else{
             JOptionPane.showMessageDialog(null, "No portal here!");
         }
