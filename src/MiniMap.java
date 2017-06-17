@@ -21,8 +21,8 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     private TileMap tileMap;
     private Player player;
     private View3D map3d;
-
-    public MiniMap(View3D map3d, int width, int height) {
+    public final double scale;
+    public MiniMap(View3D map3d, int width, int height, double scale) {
         super();
         setPreferredSize(new Dimension(width, height));
         setFocusable(true);
@@ -30,6 +30,7 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 
         requestFocus();
         this.map3d = map3d;
+        this.scale=scale;
     }
 
     public void addNotify() {
@@ -73,15 +74,17 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
          */
         //backBuffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        tileMap = new TileMap(new Maze(3,64), 32);
+        
+        tileMap = new TileMap(new Maze(3,15), 32);
+        //tileMap = new TileMap("testmap.txt", 32);
         buffered2Dmap = new BufferedImage(
-                tileMap.getWidth() * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize(),
+                tileMap.getWidth() * tileMap.getTileSize()+10*tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize()+10*tileMap.getTileSize(),
                 BufferedImage.TYPE_3BYTE_BGR);
         BUFF2Dg = buffered2Dmap.createGraphics();
 
-        player = new Player(tileMap, map3d);
-        player.setx(50);
-        player.sety(50);
+        player = new Player(tileMap, map3d,this);
+        player.setx((int)(tileMap.getTileSize()*1.5));
+        player.sety((int)(tileMap.getTileSize()*1.5));
         map3d.setPlayer(player);
         map3d.setTileMap(tileMap);
 
@@ -101,15 +104,37 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 //        } catch (IOException ex) {
 //            Logger.getLogger(MiniMap.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        //g.drawImage(image, null, 0, 0);
         player.draw(BUFF2Dg, buffered2Dmap);
-        g.drawImage(buffered2Dmap, 0, 0, this.getWidth(), this.getHeight(), null);
+        
+        BufferedImage bi = new BufferedImage((int)(scale * buffered2Dmap.getWidth(null)),
+                                             (int)(scale * buffered2Dmap.getHeight(null)),
+                                             BufferedImage.TYPE_INT_ARGB);
+;
+
+        Graphics2D grph = (Graphics2D) bi.getGraphics();
+        grph.scale(scale, scale);
+         grph.drawImage(buffered2Dmap, 0, 0, null);
+        g.drawImage(bi, 0, 0, null);
     }
 
     public void keyTyped(KeyEvent key) {
     }
 
     public void keyPressed(KeyEvent key) {
+        //activateSecond
+        if(key.getKeyChar() == '\\'){
+            if(player.activateSecond)
+                player.activateSecond=false;
+            else
+                player.activateSecond=true;
+        }
+        //draw3DWalls
+        if(key.getKeyChar() == '`'){
+            if(player.draw3DWalls)
+                player.draw3DWalls=false;
+            else
+                player.draw3DWalls=true;
+        }
         //left
         if ((key.getKeyCode() == 37 || key.getKeyCode()==65)) {
             player.left=true;

@@ -19,8 +19,8 @@ public class VIZUALIZATION {
         map3d.setBounds(0, 0, deffaultWidth, deffaultHeight);
         map3d.setOpaque(true);
         
-        MiniMap miniMap = new MiniMap(map3d, 2*150, 2*150);
-        miniMap.setBounds(0, 0, 2*150, 2*150);
+        MiniMap miniMap = new MiniMap(map3d, 200, 200, 0.3);
+        miniMap.setBounds(0, 0, 200, 200);
         miniMap.setOpaque(true);
         mainPanel.add(map3d, new Integer(0));
         mainPanel.add(miniMap, new Integer(1));
