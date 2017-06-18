@@ -3,9 +3,6 @@ import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import javax.swing.JOptionPane;
 
 public class MiniMap extends JPanel implements Runnable, KeyListener {
@@ -15,7 +12,9 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 
     private BufferedImage buffered2Dmap;
     private Graphics2D BUFF2Dg;
-
+    private BufferedImage clear__offscreen2D;
+    private Graphics2D copyBUFF2Dg;
+    public boolean activateSecond = true;
     private int FPS = 10;
     private int targetTime = 1000 / FPS;
 
@@ -23,6 +22,18 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     private Player player;
     private View3D map3d;
     public final double scale;
+
+    private class WallType {
+
+        public double dist;
+        public Color color;
+
+        public WallType() {
+            dist = 0;
+            color = Color.BLACK;
+        }
+    }
+
     public MiniMap(View3D map3d, int width, int height, double scale) {
         super();
         setPreferredSize(new Dimension(width, height));
@@ -31,7 +42,13 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 
         requestFocus();
         this.map3d = map3d;
-        this.scale=scale;
+        this.scale = scale;
+        init();
+        clear__offscreen2D = new BufferedImage(
+                tileMap.getWidth() * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize(),
+                BufferedImage.TYPE_INT_ARGB);
+        copyBUFF2Dg = (Graphics2D) clear__offscreen2D.getGraphics();
+
     }
 
     public void addNotify() {
@@ -43,19 +60,17 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         addKeyListener(this);
     }
 
-    public  void  run() {
-        init();
+    public void run() {
+        
         long startTime;
         long urdTime;
         long waitTime; // in milliseconds
         while (running) {
             startTime = System.nanoTime();
-
             update();
             this.paintComponent(this.getGraphics());
-            //JOptionPane.showMessageDialog(null, System.nanoTime()- startTime);
             urdTime = (System.nanoTime() - startTime) / 1000000;
-            waitTime = targetTime - urdTime; 
+            waitTime = targetTime - urdTime;
             //JOptionPane.showMessageDialog(null, 1000/waitTime); // real FPS
 //            
 //            BUFF2Dg.setColor(Color.GREEN);
@@ -79,17 +94,17 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
          */
         //backBuffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        
-        tileMap = new TileMap(new Maze(3,15), 32);
-        //tileMap = new TileMap("testmap.txt", 32);
+
+        //tileMap = new TileMap(new Maze(3, 15), 32);
+        tileMap = new TileMap("testmap.txt", 32);
         buffered2Dmap = new BufferedImage(
-                tileMap.getWidth() * tileMap.getTileSize()+10*tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize()+10*tileMap.getTileSize(),
+                tileMap.getWidth() * tileMap.getTileSize() + 10 * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize() + 10 * tileMap.getTileSize(),
                 BufferedImage.TYPE_3BYTE_BGR);
         BUFF2Dg = buffered2Dmap.createGraphics();
 
-        player = new Player(tileMap, map3d,this);
-        player.setx((int)(tileMap.getTileSize()*1.5));
-        player.sety((int)(tileMap.getTileSize()*1.5));
+        player = new Player(tileMap, map3d, this);
+        player.setx((int) (tileMap.getTileSize() * 1.5));
+        player.sety((int) (tileMap.getTileSize() * 1.5));
         map3d.setPlayer(player);
         map3d.setTileMap(tileMap);
 
@@ -98,6 +113,100 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 
     private void update() {
         player.update();
+    }
+
+    public void draw(Graphics2D BUFF2Dg, BufferedImage buffered2Dmap) {
+        int tx = tileMap.getx();
+        int ty = tileMap.gety();
+
+        copyBUFF2Dg.drawImage(buffered2Dmap, -(int) (this.getWidth() / this.scale / 2 - player.getx()), -(int) (this.getHeight() / this.scale / 2 - player.gety()), null);
+
+        BUFF2Dg.setColor(player.playerPointColor);
+        BUFF2Dg.fillOval(
+                (int) (tx + player.getx() - player.playerPointRadius), (int) (ty + player.gety() - player.playerPointRadius),
+                player.playerPointRadius * 2, player.playerPointRadius * 2
+        );
+        // draw walls
+        if (activateSecond) {
+            BufferedImage tmp = new BufferedImage(buffered2Dmap.getWidth(), buffered2Dmap.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D goi = (Graphics2D) tmp.getGraphics();
+            goi.translate(tmp.getWidth() >> 1, 0);
+            goi.rotate(player.cameraAngle + Math.toRadians(0)); //вместо вида вращается миникарта
+            goi.translate(-player.getx(), -player.gety());
+            goi.drawImage(buffered2Dmap, -(int) (this.getWidth() / this.scale / 2 - player.getx() - 0), -(int) (this.getHeight() / this.scale / 2 - player.gety() - 0), null);
+
+            for (int y = (int) 20; y < map3d.getHeight() / 2; y++) {
+                double z = player.distToProjectionPlane * 20 / y;
+                double frustrumWidthAtZ = (map3d.getWidth() / 2) * 20 / y;
+                int x1 = (int) (tmp.getWidth() / 2 - frustrumWidthAtZ);
+                int x2 = (int) (tmp.getWidth() / 2 + frustrumWidthAtZ);
+                int dy = map3d.getHeight() / 2 + 1 * y;
+                map3d.gcOfBuffered3dView.drawImage(tmp, 0, dy, map3d.getWidth(), dy + 1, x2, (int) z, x1, (int) z + 1, null);
+            }
+            for (int y = (int) 20; y < map3d.getHeight() / 2; y++) {
+                double z = player.distToProjectionPlane * 20 / y;
+                double frustrumWidthAtZ = (map3d.getWidth() / 2) * 20 / y;
+                int x1 = (int) (tmp.getWidth() / 2 - frustrumWidthAtZ);
+                int x2 = (int) (tmp.getWidth() / 2 + frustrumWidthAtZ);
+                int dy = map3d.getHeight() / 2 - 1 * y;
+                map3d.gcOfBuffered3dView.drawImage(tmp, 0, dy, map3d.getWidth(), dy + 1, x2, (int) z, x1, (int) z + 1, null);
+            }
+        } else {
+            map3d.drawFloor3D(map3d.gcOfBuffered3dView);
+        }
+        
+         map3d.gcOfBuffered3dView.drawImage(map3d.shadeCeilFloor, 0, 0, map3d.getWidth(), map3d.getHeight(), 0, 0, map3d.shadeCeilFloor.getWidth(), map3d.shadeCeilFloor.getHeight(), null);
+        
+        for (int x1 = -(map3d.getWidth() / 2), x2 = (map3d.getWidth() / 2); x1 <= 0 && x2 >= 0; x1++, x2--) {
+            double left_a = Math.atan(x1 / player.distToProjectionPlane);
+            WallType LeftSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - left_a, BUFF2Dg, Color.BLUE, clear__offscreen2D);
+            double left_z = LeftSideCameraWallDistance.dist * Math.cos(left_a);
+
+            double right_a = Math.atan(x2 / player.distToProjectionPlane);
+            WallType RightSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - right_a, BUFF2Dg, Color.BLUE, clear__offscreen2D);
+            double right_z = RightSideCameraWallDistance.dist * Math.cos(right_a);
+
+            map3d.drawWall3D(map3d.gcOfBuffered3dView, left_z, LeftSideCameraWallDistance.color, right_z, RightSideCameraWallDistance.color, x1 + map3d.getWidth() / 2, x2 + map3d.getWidth() / 2);
+
+        }
+        // draw camera direction
+        castRay(player.getx(),player.gety(), player.cameraAngle, BUFF2Dg, Color.GREEN, clear__offscreen2D);
+//        if(draw3DWalls){
+//            map3d.gcOfBuffered3dView.setColor(Color.WHITE);
+//            map3d.gcOfBuffered3dView.fillRect(0, 0, off3Dscreen.getWidth(), off3Dscreen.getHeight());
+//        }
+        map3d.render(map3d.buffered3Dview);
+    }
+
+    private WallType castRay(
+            double cameraPositionX,
+            double cameraPositionY,
+            double cameraDirectionAngle,
+            Graphics g,
+            Color rayColor,
+            BufferedImage clear__buffered2Dmap
+    ) {
+        double s = Math.sin(cameraDirectionAngle);
+        double c = Math.cos(cameraDirectionAngle);
+        double d = player.playerPointRadius + 1;//out of radius of player point
+        int currentColor = 0;
+        int px = 0, py = 0;
+        do {
+            d += 0.1;
+            px = (int) (cameraPositionX + d * s);
+            py = (int) (cameraPositionY + d * c);
+            currentColor = clear__buffered2Dmap.getRGB(
+                    (int) (px),
+                    (int) (py)
+            );
+        } while (currentColor != Color.BLACK.getRGB());
+        g.setColor(new Color(rayColor.getRed(), rayColor.getGreen(), rayColor.getBlue(), 10));
+        g.drawLine((int) cameraPositionX + tileMap.getx(), (int) cameraPositionY + tileMap.gety(), (int) (cameraPositionX + d * s) + tileMap.getx(), (int) (cameraPositionY + d * c) + tileMap.gety());
+        WallType result = new WallType();
+        result.dist = d;
+        result.color = new Color(currentColor);
+        return result;
     }
 
     public synchronized void paintComponent(Graphics g) {
@@ -109,16 +218,16 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 //        } catch (IOException ex) {
 //            Logger.getLogger(MiniMap.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        player.draw(BUFF2Dg, buffered2Dmap);
-        
-        BufferedImage bi = new BufferedImage((int)(scale * buffered2Dmap.getWidth(null)),
-                                             (int)(scale * buffered2Dmap.getHeight(null)),
-                                             BufferedImage.TYPE_INT_ARGB);
-;
+        draw(BUFF2Dg, buffered2Dmap);
+
+        BufferedImage bi = new BufferedImage((int) (scale * buffered2Dmap.getWidth(null)),
+                (int) (scale * buffered2Dmap.getHeight(null)),
+                BufferedImage.TYPE_INT_ARGB);
+        ;
 
         Graphics2D grph = (Graphics2D) bi.getGraphics();
         grph.scale(scale, scale);
-         grph.drawImage(buffered2Dmap, 0, 0, null);
+        grph.drawImage(buffered2Dmap, 0, 0, null);
         g.drawImage(bi, 0, 0, null);
     }
 
@@ -127,75 +236,69 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 
     public void keyPressed(KeyEvent key) {
         //activateSecond
-        if(key.getKeyChar() == '\\'){
-            if(player.activateSecond)
-                player.activateSecond=false;
-            else
-                player.activateSecond=true;
-        }
-        //draw3DWalls
-        if(key.getKeyChar() == '`'){
-            if(player.draw3DWalls)
-                player.draw3DWalls=false;
-            else
-                player.draw3DWalls=true;
+        if (key.getKeyChar() == '\\') {
+            if (activateSecond) {
+                activateSecond = false;
+            } else {
+                activateSecond = true;
+            }
         }
         //left
-        if ((key.getKeyCode() == 37 || key.getKeyCode()==65)) {
-            player.left=true;
+        if ((key.getKeyCode() == 37 || key.getKeyCode() == 65)) {
+            player.left = true;
         }//right
-        else if ((key.getKeyCode() == 39 || key.getKeyCode()==68)) {
-            player.right=true;
+        else if ((key.getKeyCode() == 39 || key.getKeyCode() == 68)) {
+            player.right = true;
         }
         //straight
-        if ((key.getKeyCode() == 38 || key.getKeyCode()==87)) {
-            player.up=true;
-            
+        if ((key.getKeyCode() == 38 || key.getKeyCode() == 87)) {
+            player.up = true;
+
         }//down
-        else if ((key.getKeyCode() == 40 || key.getKeyCode()==83)) {
-            player.down=true;
+        else if ((key.getKeyCode() == 40 || key.getKeyCode() == 83)) {
+            player.down = true;
         }
         //z
-        if ((key.getKeyCode() == 90 || key.getKeyCode()==91)) {
-            player.rotateLeft=true;
+        if ((key.getKeyCode() == 90 || key.getKeyCode() == 91)) {
+            player.rotateLeft = true;
         }//x
-        else if ((key.getKeyCode() == 88 || key.getKeyCode()==93)) {
-            player.rotateRight=true;
+        else if ((key.getKeyCode() == 88 || key.getKeyCode() == 93)) {
+            player.rotateRight = true;
         }
         //teleport up
-        if(key.getKeyChar() == '+'){
+        if (key.getKeyChar() == '+') {
             player.teleport(tileMap.upTeleport);
         }
         //teleport down
-        if(key.getKeyChar() == '-'){
+        if (key.getKeyChar() == '-') {
             player.teleport(tileMap.downTeleport);
-            
+
         }
         repaint();
     }
 
     public void keyReleased(KeyEvent key) {
-         //left
-        if ((key.getKeyCode() == 37 || key.getKeyCode()==65)) {
-            player.left=false;
+        //left
+        if ((key.getKeyCode() == 37 || key.getKeyCode() == 65)) {
+            player.left = false;
         }//right
-        else if ((key.getKeyCode() == 39 || key.getKeyCode()==68)) {
-            player.right=false;
+        else if ((key.getKeyCode() == 39 || key.getKeyCode() == 68)) {
+            player.right = false;
         }
         //straight
-        if ((key.getKeyCode() == 38 || key.getKeyCode()==87)) {
-            player.up=false;
-            
+        if ((key.getKeyCode() == 38 || key.getKeyCode() == 87)) {
+            player.up = false;
+
         }//down
-        else if ((key.getKeyCode() == 40 || key.getKeyCode()==83)) {
-            player.down=false;
+        else if ((key.getKeyCode() == 40 || key.getKeyCode() == 83)) {
+            player.down = false;
         }
         //z
-        if ((key.getKeyCode() == 90 || key.getKeyCode()==91)) {
-            player.rotateLeft=false;
+        if ((key.getKeyCode() == 90 || key.getKeyCode() == 91)) {
+            player.rotateLeft = false;
         }//x
-        else if ((key.getKeyCode() == 88 || key.getKeyCode()==93)) {
-            player.rotateRight=false;
+        else if ((key.getKeyCode() == 88 || key.getKeyCode() == 93)) {
+            player.rotateRight = false;
         }
     }
 
