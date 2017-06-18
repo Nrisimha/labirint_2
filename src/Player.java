@@ -18,6 +18,7 @@ public class Player {
     private View3D map3d;
     private MiniMap miniMap;
     
+    private int mouseXLastPosition;
     public Player(TileMap tm, View3D map3d, MiniMap miniMap) {
         this.tileMap = tm;
         this.map3d = map3d;
@@ -31,6 +32,7 @@ public class Player {
         this.moveSpeed = 8.0;
         this.rotateSpeed = 0.2;
         distToProjectionPlane = (map3d.getWidth() / 2) / Math.tan(fieldOfViewInRadians / 2);
+        mouseXLastPosition = 0;// (map3d.getLocationOnScreen().x+map3d.getWidth()/2 - MouseInfo.getPointerInfo().getLocation().x);
     }
     public Player(TileMap tm, View3D map3d, MiniMap miniMap, double moveSpeed, double rotateSpeed) {
         this.tileMap = tm;
@@ -45,6 +47,7 @@ public class Player {
         this.moveSpeed = moveSpeed;
         this.rotateSpeed = rotateSpeed;
         distToProjectionPlane = (map3d.getWidth() / 2) / Math.tan(fieldOfViewInRadians / 2);
+        mouseXLastPosition = 0;// (map3d.getLocationOnScreen().x+map3d.getWidth()/2 - MouseInfo.getPointerInfo().getLocation().x);
     }
     public void setx(int i) {
         x = i;
@@ -60,6 +63,11 @@ public class Player {
     }
     
     public void update() {
+        int mouseXPlace = (map3d.getLocationOnScreen().x+map3d.getWidth()/2 - MouseInfo.getPointerInfo().getLocation().x);
+        mouseXPlace = (mouseXPlace == mouseXLastPosition)?mouseXLastPosition:mouseXPlace;
+        System.out.println(""+mouseXLastPosition+", "+mouseXPlace+", "+(mouseXLastPosition-mouseXPlace));
+        
+        
         //determine next position
         if (right && !left) {
             map3d.moveCamera(moveSpeed, Math.toRadians(-90));
@@ -68,9 +76,9 @@ public class Player {
             } else if (down) {
                 map3d.moveCamera(-moveSpeed, 0);
             }
-            if (rotateRight) {
+            if (rotateRight || (mouseXLastPosition-mouseXPlace) > 0) {
                 cameraAngle -= rotateSpeed;
-            } else if (rotateLeft) {
+            } else if (rotateLeft || (mouseXLastPosition-mouseXPlace) < 0) {
                 cameraAngle += rotateSpeed;
             }
         } else if (left && !right) {
@@ -80,9 +88,9 @@ public class Player {
             } else if (down) {
                 map3d.moveCamera(-moveSpeed, 0);
             }
-            if (rotateRight) {
+            if (rotateRight || (mouseXLastPosition-mouseXPlace) > 0) {
                 cameraAngle -= rotateSpeed;
-            } else if (rotateLeft) {
+            } else if (rotateLeft || (mouseXLastPosition-mouseXPlace) < 0) {
                 cameraAngle += rotateSpeed;
             }
         } else if (up && !down) {
@@ -92,9 +100,9 @@ public class Player {
             } else if (left) {
                 map3d.moveCamera(moveSpeed, Math.toRadians(90));
             }
-            if (rotateRight) {
+            if (rotateRight || (mouseXLastPosition-mouseXPlace) > 0) {
                 cameraAngle -= rotateSpeed;
-            } else if (rotateLeft) {
+            } else if (rotateLeft || (mouseXLastPosition-mouseXPlace) < 0) {
                 cameraAngle += rotateSpeed;
             }
         } else if (down && !up) {
@@ -104,12 +112,12 @@ public class Player {
             } else if (left) {
                 map3d.moveCamera(moveSpeed, Math.toRadians(90));
             }
-            if (rotateRight) {
+            if (rotateRight || (mouseXLastPosition-mouseXPlace) > 0) {
                 cameraAngle -= rotateSpeed;
-            } else if (rotateLeft) {
+            } else if (rotateLeft || (mouseXLastPosition-mouseXPlace) < 0) {
                 cameraAngle += rotateSpeed;
             }
-        } else if (rotateRight && !rotateLeft) {
+        } else if ((rotateRight || (mouseXLastPosition-mouseXPlace) > 0) && !(rotateLeft || (mouseXLastPosition-mouseXPlace) < 0)) {
             cameraAngle -= rotateSpeed;
             if (up) {
                 map3d.moveCamera(moveSpeed, 0);
@@ -121,7 +129,7 @@ public class Player {
             } else if (left) {
                 map3d.moveCamera(moveSpeed, Math.toRadians(90));
             }
-        } else if (rotateLeft && !rotateRight) {
+        } else if ((rotateLeft || (mouseXLastPosition-mouseXPlace) < 0) && !(rotateRight || (mouseXLastPosition-mouseXPlace) > 0)) {
             cameraAngle += rotateSpeed;
             if (up) {
                 map3d.moveCamera(moveSpeed, 0);
@@ -134,7 +142,7 @@ public class Player {
                 map3d.moveCamera(moveSpeed, Math.toRadians(90));
             }
         }
-
+        mouseXLastPosition=mouseXPlace;
         //move the map
         tileMap.setx((int) (miniMap.getWidth() / miniMap.scale / 2 - x));
         tileMap.sety((int) (miniMap.getHeight() / miniMap.scale / 2 - y));

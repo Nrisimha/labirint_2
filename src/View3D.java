@@ -8,8 +8,8 @@ import javax.swing.JOptionPane;
 
 class View3D extends JPanel {
 
-    public final BufferedImage buffered3Dview,shadeCeilFloor;
-    public final Graphics2D  gcOfBuffered3dView;
+    public BufferedImage buffered3Dview,shadeCeilFloor;
+    public Graphics2D  gcOfBuffered3dView;
     private Point.Double cameraPosition;
     private Player player;
     private TileMap tileMap;

@@ -10,8 +10,8 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     private Thread thread;
     private boolean running;
 
-    private BufferedImage buffered2Dmap;
-    private Graphics2D BUFF2Dg;
+    private BufferedImage buffered2Dmap, scaledBuffered2Dmap;
+    private Graphics2D BUFF2Dg, scaledBUFF2Dg;
     private BufferedImage clear__offscreen2D;
     private Graphics2D copyBUFF2Dg;
     public boolean activateSecond = true;
@@ -37,6 +37,7 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     public MiniMap(View3D map3d, int width, int height, double scale) {
         super();
         setPreferredSize(new Dimension(width, height));
+        setSize(width,height);
         setFocusable(true);
         //WIDTH=width;
 
@@ -67,8 +68,9 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         long waitTime; // in milliseconds
         while (running) {
             startTime = System.nanoTime();
-            update();
-            this.paintComponent(this.getGraphics());
+           this.paintComponent(this.getGraphics());
+           update();
+            
             urdTime = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime - urdTime;
             //JOptionPane.showMessageDialog(null, 1000/waitTime); // real FPS
@@ -95,13 +97,22 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
          */
         //backBuffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
-        //tileMap = new TileMap(new Maze(3, 15), 32);
-        tileMap = new TileMap("testmap.txt", 32);
+        tileMap = new TileMap(new Maze(3, 15), 32);
+        
+        //tileMap = new TileMap("testmap.txt", 32);
+
+        tileMap.setx((int) (this.getWidth() / this.scale / 2 - (int) (tileMap.getTileSize() * 1.5)));
+        tileMap.sety((int) (this.getHeight() / this.scale / 2 - (int) (tileMap.getTileSize() * 1.5)));
         buffered2Dmap = new BufferedImage(
                 tileMap.getWidth() * tileMap.getTileSize() + 10 * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize() + 10 * tileMap.getTileSize(),
                 BufferedImage.TYPE_3BYTE_BGR);
         BUFF2Dg = buffered2Dmap.createGraphics();
-
+        scaledBuffered2Dmap = new BufferedImage(
+                (int) (scale * buffered2Dmap.getWidth(null)),
+                (int) (scale * buffered2Dmap.getHeight(null)),
+                BufferedImage.TYPE_INT_ARGB);
+        scaledBUFF2Dg = (Graphics2D) scaledBuffered2Dmap.getGraphics();
+        scaledBUFF2Dg.scale(scale, scale);        
         player = new Player(tileMap, map3d, this);
         player.setx((int) (tileMap.getTileSize() * 1.5));
         player.sety((int) (tileMap.getTileSize() * 1.5));
@@ -210,7 +221,7 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     }
 
     public synchronized void paintComponent(Graphics g) {
-        BUFF2Dg.clearRect(0, 0, buffered2Dmap.getWidth(), buffered2Dmap.getHeight());
+
         tileMap.draw(BUFF2Dg);
 
 //        try {
@@ -219,16 +230,9 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
 //            Logger.getLogger(MiniMap.class.getName()).log(Level.SEVERE, null, ex);
 //        }
         draw(BUFF2Dg, buffered2Dmap);
-
-        BufferedImage bi = new BufferedImage((int) (scale * buffered2Dmap.getWidth(null)),
-                (int) (scale * buffered2Dmap.getHeight(null)),
-                BufferedImage.TYPE_INT_ARGB);
-        ;
-
-        Graphics2D grph = (Graphics2D) bi.getGraphics();
-        grph.scale(scale, scale);
-        grph.drawImage(buffered2Dmap, 0, 0, null);
-        g.drawImage(bi, 0, 0, null);
+        
+        scaledBUFF2Dg.drawImage(buffered2Dmap, 0, 0, null);
+        g.drawImage(scaledBuffered2Dmap, 0, 0, null);
     }
 
     public void keyTyped(KeyEvent key) {
