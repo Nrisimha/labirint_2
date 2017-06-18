@@ -12,7 +12,7 @@ class View3D extends JPanel {
     private Graphics2D  off3Dgc;
 
     private Point.Double cameraPosition ;
-    private double fieldOfViewInRadians = Math.toRadians(60);
+    private double fieldOfViewInRadians = Math.toRadians(120);
 
     private int projectionPlaneWidth = 300;
     private int projectionPlaneHeight = 300;

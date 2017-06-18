@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import javax.swing.JOptionPane;
 
 public class MiniMap extends JPanel implements Runnable, KeyListener {
 
@@ -15,7 +16,7 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     private BufferedImage buffered2Dmap;
     private Graphics2D BUFF2Dg;
 
-    private int FPS = 30;
+    private int FPS = 10;
     private int targetTime = 1000 / FPS;
 
     private TileMap tileMap;
@@ -42,20 +43,24 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         addKeyListener(this);
     }
 
-    public void run() {
+    public  void  run() {
         init();
         long startTime;
         long urdTime;
-        long waitTime;
+        long waitTime; // in milliseconds
         while (running) {
             startTime = System.nanoTime();
 
             update();
             this.paintComponent(this.getGraphics());
-
+            //JOptionPane.showMessageDialog(null, System.nanoTime()- startTime);
             urdTime = (System.nanoTime() - startTime) / 1000000;
-            waitTime = targetTime - urdTime;
-
+            waitTime = targetTime - urdTime; 
+            //JOptionPane.showMessageDialog(null, 1000/waitTime); // real FPS
+//            
+//            BUFF2Dg.setColor(Color.GREEN);
+//            BUFF2Dg.setFont(new Font("Serif", Font.BOLD, 24));
+//            BUFF2Dg.drawString("FPS: " + 1000/waitTime, 20, 20);
             try {
                 Thread.sleep(waitTime);
             } catch (Exception e) {

@@ -18,7 +18,7 @@ public class Player {
     private int playerPointRadius = 3;
 
     public double cameraAngle = 0;
-    private double fieldOfViewInRadians = Math.toRadians(60);
+    private double fieldOfViewInRadians = Math.toRadians(120);
 
     private int projectionPlaneWidth = 300;
     private int projectionPlaneHeight = 300;
@@ -266,32 +266,11 @@ public class Player {
             d += 0.1;
             px = (int) (cameraPositionX + d * s);
             py = (int) (cameraPositionY + d * c);
-            /*if ((px+tileMap.getx()) >= clear__buffered2Dmap.getWidth() || (py+tileMap.gety()) >= clear__buffered2Dmap.getHeight() || px+tileMap.getx() < 0 || py+tileMap.gety() < 0) {
-               JOptionPane.showMessageDialog(null, "My Goodness, this is so concise");
-                 break;
-            }*/
             currentColor = clear__buffered2Dmap.getRGB(
                     (int) (px),
                     (int) (py)
             );
-
-            /*
-            if(currentColor!=Color.BLACK.getRGB() && currentColor!=Color.WHITE.getRGB()){
-                try {
-                    ImageIO.write(clear__buffered2Dmap, "PNG", new File("filename1.png"));
-                } catch (IOException ex) {
-                    Logger.getLogger(MiniMap.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                JOptionPane.showMessageDialog(null, "My Goodness, this is so concise");
-            }
-             */
-        } while (currentColor == Color.WHITE.getRGB());//(currentColor == Color.WHITE.getRGB() || currentColor == Color.BLUE.getRGB() || currentColor == Color.GREEN.getRGB());//calcuate distance to wall on the picture
-        /* if ( rayColor == Color.GREEN) {
-                if(activateSecond)
-                JOptionPane.showMessageDialog(null, "My Goodness");
-                //down portal founded
-                // map3d.drawFloorPortal((int) d, (int) px, (int) py, (int) cameraPositionX, (int) cameraPositionY, cameraAngle, off3Dgc);
-            }*/
+        } while (currentColor != Color.BLACK.getRGB());
         g.setColor(new Color(rayColor.getRed(), rayColor.getGreen(), rayColor.getBlue(), 10));
         g.drawLine((int) cameraPositionX + tileMap.getx(), (int) cameraPositionY + tileMap.gety(), (int) (cameraPositionX + d * s) + tileMap.getx(), (int) (cameraPositionY + d * c) + tileMap.gety());
         WallType result = new WallType();
