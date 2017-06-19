@@ -4,36 +4,41 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
-
-public class VIZUALIZATION {
-
+/**
+ * Klasa Vizualization odpowiada za wyświetlenie procesu gry w postaci JFrame
+ * i pozwala skorzystać się z widoku 3D (klasa View3D) oraz zawiera minimapę (klasa Minimap)
+ * @author Maksym Titov
+ */
+public class Vizualization {
+    //domyślne szyrokość
+    //i wysokość okna JFrame
     private static int deffaultWidth = 800;
     private static int deffaultHeight = 600;
     public static JFrame window;
 
     public static void main(String args[]) {
-        window = new JFrame("LABIRINT");
+        window = new JFrame("L.A.B.I.R.Y.N.T.");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLayout(new BorderLayout());
         window.setSize(deffaultWidth, deffaultHeight);
-
+        
         JLayeredPane mainPanel = new JLayeredPane();
         mainPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
         mainPanel.setPreferredSize(new Dimension(window.getWidth(), window.getHeight()));
 
         window.add(mainPanel, BorderLayout.CENTER);
 
-        View3D map3d = new View3D(window.getWidth(), window.getHeight());
-        map3d.setBounds(0, 0, window.getWidth(), window.getHeight());
-        //set map3d as not transparent for drawing
-        map3d.setOpaque(true);
+        View3D view3d = new View3D(window.getWidth(), window.getHeight());
+        view3d.setBounds(0, 0, window.getWidth(), window.getHeight());
+        //set view3d as not transparent for drawing
+        view3d.setOpaque(true);
 
-        MiniMap miniMap = new MiniMap(map3d, 200, 200, 0.3);
+        MiniMap miniMap = new MiniMap(view3d, 200, 200, 0.3);
         miniMap.setBounds(0, 0, 200, 200);
         //set miniMap as not transparent for drawing
         miniMap.setOpaque(true);
 
-        mainPanel.add(map3d, new Integer(0));
+        mainPanel.add(view3d, new Integer(0));
         mainPanel.add(miniMap, new Integer(1));
 
         window.pack();
@@ -41,10 +46,10 @@ public class VIZUALIZATION {
         window.addComponentListener(new ComponentListener() {
             public void componentResized(ComponentEvent e) {
                
-                map3d.setSize(window.getWidth(), window.getHeight());
-                map3d.setBounds(0, 0, window.getWidth(), window.getHeight());
-                map3d.buffered3Dview = new BufferedImage(map3d.getWidth(), map3d.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-                map3d.gcOfBuffered3dView = map3d.buffered3Dview.createGraphics();
+                view3d.setSize(window.getWidth(), window.getHeight());
+                view3d.setBounds(0, 0, window.getWidth(), window.getHeight());
+                view3d.buffered3Dview = new BufferedImage(view3d.getWidth(), view3d.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+                view3d.gcOfBuffered3dView = view3d.buffered3Dview.createGraphics();
             }
 
             @Override

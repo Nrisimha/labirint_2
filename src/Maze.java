@@ -4,23 +4,33 @@
  * and open the template in the editor.
  */
 
-
 import java.util.Random;
 import java.util.Stack;
 /**
- *
- * @author Piotr
+ * Klasa Maze przechowuje labirynt w postaci tablicy int[][][][]
+ * @author Piotr Bartman
  */
 public class Maze {
     private int maze[][][][];
     private int dimension = 0;
-    private int size = 17; //wartość domyślna
-    private int cubeDen = 1; //ilość przejść między piętrami sześcianu
-    private int cubeDenDelta = 1; //odchylenie w ilości przejść między piętrami
-    private int tessDen = 1; //ilość przejść między sześcianami
-    private int tessDenDelta = 1; //odchylenie w ilości przejść między sześcianami
+    /**wartość domyślna size = 5*/
+    private int size = 5; 
+    /**ilość przejść między piętrami sześcianu, domniemane 1 przejście na 128 pól,
+     maksymalna wartość to size^2 / 4*/
+    private int cubeDen;
+    /**odchylenie w ilości przejść między piętrami, domniemane 1/2 cubeDen
+     maksymalna wartość to cubeDen-1*/
+    private int cubeDenDelta;
+    /**ilość przejść między sześcianami, domniemane 1 przejście na 128 pól
+      maksymalna wartość to size^2 / 4*/
+    private int tessDen;
+    /**odchylenie w ilości przejść między sześcianami, domniemane 1/2 tessDen
+     maksymalna wartość to tessDen-1*/
+    private int tessDenDelta;
     
-    public static final int CUBENUMBER = 8;//ilość sześcianów w tesserakcie
+    /**ilość sześcianów w tesserakcie*/
+    public static final int CUBENUMBER = 8;
+    /**stałe (elementy) labiryntu*/
     public static final int FLOOR = 1;
     public static final int WALL = 2;
     public static final int UP = 3;
@@ -29,8 +39,59 @@ public class Maze {
     public static final int DOOR = 7;
     public static final int DOORUP = 9;
     public static final int DOORDOWN = 11;
+    public static final int END = 13;
+    public static final int START = 15;
     
+    /**
+     * Generuje labirynt doskonały o podanych parametrach.
+     * @param dimension int od 2 do 4
+     * @param size int od 5
+     * @param transistionDensity oczekuje od 0 do 4 argumentów 
+     * (cubeDen, cubeDenDelta, tessDen, tessDenDelta) jeżeli nie podane to 
+     * wartości domniemane
+     */
     public Maze(int dimension, int size, int... transistionDensity) {
+        if (dimension < 2) this.dimension = 2;
+        else if (dimension > 4) this.dimension = 4;
+        else this.dimension = dimension;
+        
+        if (size%2 == 0) size--;
+        if (size > 4) this.size = size;
+        else size = this.size;
+        
+        maze = new int[dimension==4 ? size : 1][dimension>=3 ? size : 1][size][size];
+        
+        if (transistionDensity.length > 0) 
+            cubeDen = Math.min(transistionDensity[0],(int)(size*size/4));
+        else 
+            cubeDen = Math.max((int)(size*size/128), 1);
+        if (transistionDensity.length > 1) 
+            cubeDenDelta = Math.min(transistionDensity[1], cubeDen-1);
+        else 
+            cubeDenDelta = (int)(cubeDen/2);
+        if (transistionDensity.length > 2) 
+            tessDen = Math.min(transistionDensity[2],(int)(size*size/4));
+        else 
+            tessDen = Math.max((int)(size*size/128), 1);
+        if (transistionDensity.length > 3) 
+            tessDenDelta = Math.min(transistionDensity[1], tessDen-1);
+        else 
+            tessDenDelta = (int)(tessDen/2);
+        
+        generateFrames();
+        generateColumns();
+        if (dimension >= 3) generate3DTransition();
+        if (dimension == 4) generate4DTransition();
+        generateCorridors();
+    }
+    
+    /**
+     * Tworzy labirynt z podanej tablicy.
+     * @param array
+     * @param dimension int od 2 do 4
+     * @param size int od 5
+     */
+    public Maze (int array[][][][], int dimension, int size) {
         if (dimension < 2) this.dimension = 2;
         else if (dimension > 4) this.dimension = 4;
         else this.dimension = dimension;
@@ -38,24 +99,54 @@ public class Maze {
         if (size < 5) this.size = 5;
         else if (size%2 == 0) this.size = size-1;
         else this.size = size;
-        maze = new int[dimension==4 ? this.size : 1][dimension>=3 ? this.size : 1][this.size][this.size];
         
-        if (transistionDensity.length > 0) cubeDen = transistionDensity[0]<this.size ? transistionDensity[0] : this.size-1;
-        else cubeDen = ((cubeDen=(int)(this.size*this.size/128))>0) ? cubeDen : 1;
-        if (transistionDensity.length > 1) cubeDenDelta = transistionDensity[1]<cubeDen ? transistionDensity[1] : cubeDen-1;
-        else cubeDenDelta = (int)(cubeDen/2);
-        if (transistionDensity.length > 2) tessDen = transistionDensity[2]<this.size ? transistionDensity[2] : this.size-1;
-        else tessDen = (tessDen=(int)(this.size*this.size/128))>0 ? tessDen : 1;
-        if (transistionDensity.length > 3) tessDenDelta = transistionDensity[3]<cubeDen ? transistionDensity[3] : cubeDen-1;
-        else tessDenDelta = (int)(tessDen/2);
-        generateColumns();
-        if (dimension >= 3) generate3DTransition();
-        if (dimension == 4) generate4DTransition();
-        generateCorridors();
+        int c = dimension==4 ? this.size : 1;
+        int l = dimension>=3 ? this.size : 1;
+        maze = new int[c][l][this.size][this.size];
+        for (int i=0; i<c; i++) {
+            for (int j=0; j<l; j++) {
+                for (int k=0; k<size; k++) {
+                    for (int h=0; h<size; h++) {
+                        switch (array[i][j][k][h]) {
+                            case START:
+                                maze[i][j][k][h] = START;
+                                break;
+                            case END:
+                                maze[i][j][k][h] = END;
+                                break;
+                            case DOOR:
+                                maze[i][j][k][h] = DOOR;
+                                break;
+                            case WALL:
+                                maze[i][j][k][h] = WALL;
+                                break;
+                            case HARDWALL:
+                                maze[i][j][k][h] = HARDWALL;
+                                break;
+                            case UP:
+                                maze[i][j][k][h] = UP;
+                                break;
+                            case DOWN:
+                                maze[i][j][k][h] = DOWN;
+                                break;
+                            case DOORUP:
+                                maze[i][j][k][h] = DOORUP;
+                                break;
+                            case DOORDOWN:
+                                maze[i][j][k][h] = DOORDOWN;
+                                break;
+                            default:
+                                maze[i][j][k][h] = FLOOR;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        generateFrames();
+        if (dimension >= 3) check3DTransition();
+        if (dimension == 4) check4DTransition();
     }
-    /*public Maze (int array[][][][]) {
-        if (array[].)
-    }*/
     
     private void generateColumns() {
         int cubeNum = (dimension==4) ? 8 : 1;
@@ -63,13 +154,23 @@ public class Maze {
         for (int i0=0; i0<cubeNum; i0++) {//cubes
             for (int i1=0; i1<lvlNum; i1++) {//levels
                 for (int i2=0; i2<size; i2++) {
-                    maze[i0][i1][i2][0] = HARDWALL;
-                    maze[i0][i1][i2][size-1] = HARDWALL;
                     if (i2%2==0)
                         for (int i3=0; i3<size; i3++) {
                             if (i3%2==0)
                                 maze[i0][i1][i2][i3] = HARDWALL;
                         }
+                }
+            }
+        }
+    }
+    private void generateFrames() {
+        int cubeNum = (dimension==4) ? 8 : 1;
+        int lvlNum = (dimension>=3) ? size : 1;
+        for (int i0=0; i0<cubeNum; i0++) {//cubes
+            for (int i1=0; i1<lvlNum; i1++) {//levels
+                for (int i2=0; i2<size; i2++) {
+                    maze[i0][i1][i2][0] = HARDWALL;
+                    maze[i0][i1][i2][size-1] = HARDWALL;
                 }
                 for (int i3=0; i3<size; i3++) {
                     maze[i0][i1][0][i3] = HARDWALL;
@@ -316,21 +417,31 @@ public class Maze {
         return r+1;
     }
     
+    /**
+     * 
+     * @param k współrzędne od 0 do 4, niepodane współrzędne domniemanie 0
+     * @return
+     */
     public int get(int... k) {
         switch(k.length) {
+            case 0:
+                return maze[0][0][0][0];
             case 1:
                 return maze[0][0][0][k[0]];
             case 2:
                 return maze[0][0][k[0]][k[1]];
             case 3:
                 return maze[0][k[0]][k[1]][k[2]];
-            case 4:
-                return maze[k[0]][k[1]][k[2]][k[3]];
             default:
                 return maze[k[0]][k[1]][k[2]][k[3]];
         }
     }
     
+    /**
+     *
+     * @param k współrzędne od 1 do 2, domniemany sześcian to sześcian 0
+     * @return
+     */
     public int[][] getLevel(int... k) {
         switch(k.length) {
             case 1:
@@ -346,13 +457,29 @@ public class Maze {
         return size;
     }
     
+    private void check3DTransition() {
+        int cubeNum = (dimension==4) ? 8 : 1;
+        for (int i=0; i<cubeNum; i++) {//cubes
+            for (int j=0; j<size-1; j++) {
+                for (int k=0; k<size-1; k++) {
+                    if (maze[i][0][j][k] == DOWN)
+                        maze[i][0][j][k] = FLOOR;
+                    if (maze[i][size-1][j][k] == UP)
+                        maze[i][size-1][j][k] = FLOOR;
+                }
+            }
+        }
+    }
+    
+    private void check4DTransition() {}
+    
     public static void main(String[] args) {
         final int X = 17, Y=17, Z=17;
         Maze maze = new Maze(2, 61);
         for (int i=0; i < X; i++) {
             for (int j=0; j<Y; j++) {
                 //System.out.print(maze.get(i,j));
-                if (maze.get(j,i) == maze.WALL)
+                if (maze.get(j,i) == Maze.WALL)
                     System.out.print("  ");
                 else
                     System.out.print("##");

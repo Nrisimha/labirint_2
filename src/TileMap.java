@@ -14,7 +14,13 @@ public class TileMap {
     private int[][] map;
     private int mapWidth;
     private int mapHeight;
-    public static int hardWall=Maze.HARDWALL,wall=Maze.WALL,floor=Maze.FLOOR,upTeleport=Maze.UP,downTeleport=Maze.DOWN;
+    public static int 
+            hardWall=Maze.HARDWALL,
+            wall=Maze.WALL,
+            floor=Maze.FLOOR,
+            upTeleport=Maze.UP,
+            downTeleport=Maze.DOWN,
+            exitTeleport=Maze.END;
     public TileMap(String pathToLevel, int tileSize) {
         this.tileSize = tileSize;
         
@@ -104,6 +110,9 @@ public class TileMap {
                 }
                 else if(rc==upTeleport){
                         g.setColor(Color.RED);
+                }
+                else if(rc==exitTeleport){
+                        g.setColor(Color.ORANGE);
                 }
                 else{
                         g.setColor(Color.YELLOW);
