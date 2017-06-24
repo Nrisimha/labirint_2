@@ -5,15 +5,25 @@ import java.awt.image.*;
 import java.awt.event.*;
 import javax.swing.JOptionPane;
 
+/**
+ * Klasa MiniMap odpowiada za wyświetlenie mapy z widokiem od góry i
+ * nasłuchiwanie klawiatury i myszki w celu przesuwania gracza (Player) w
+ * labiryncie
+ *
+ * @author Maksym Titov
+ */
 public class MiniMap extends JPanel implements Runnable, KeyListener {
 
-    private Thread thread;
+    private Thread renderer;
     private boolean running;
-
+    //obrazek do zapisywania bieżącego poziomu labiryntu w postaci graficznej, skalowany obraz poziomu.
     private BufferedImage buffered2Dmap, scaledBuffered2Dmap;
+    //odpowiednie grafiki dla obrazów  buffered2Dmap i scaledBuffered2Dmap.
     private Graphics2D BUFF2Dg, scaledBUFF2Dg;
-    private BufferedImage clear__offscreen2D;
-    private Graphics2D copyBUFF2Dg;
+    //obraz poziomu labiryntu bez gracza
+    private BufferedImage buffered2DmapWithoutPlayer;
+    private Graphics2D BUFF2DgWithoutPlayer;
+    //activateSecond - zmiana trybu rysowania podłogi i sufitu
     public boolean activateSecond = true,
             transparentWalls = false;
     private int FPS = 10;
@@ -24,6 +34,10 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
     private View3D view3d;
     public final double scale;
 
+    /**
+     * Klasa WallType stworzona po to, żeby przechowywać odległość do ściany i
+     * kolor ściany
+     */
     private class WallType {
 
         public double dist;
@@ -35,44 +49,57 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public MiniMap(View3D view3d, int width, int height, double scale) {
+    /**
+     *
+     * @param view3d - widok 3D, na którym wyświetlamy obszar widoku grawca na
+     * obecnej mapie
+     * @param width - szerokość minimapy na ekranie w pikselach
+     * @param height - wysokość minimapy na ekranie w pikselach
+     * @param scale - skalowanie minimapy dla bardziej wygodnego wyświetlania
+     */
+    public MiniMap(View3D view3d, int width, int height, double scale, GameMaster gameMaster) {
         super();
         setPreferredSize(new Dimension(width, height));
-        setSize(width,height);
+        setSize(width, height);
         setFocusable(true);
-        //WIDTH=width;
 
         requestFocus();
         this.view3d = view3d;
         this.scale = scale;
-        init();
-        clear__offscreen2D = new BufferedImage(
+        init(gameMaster);
+        buffered2DmapWithoutPlayer = new BufferedImage(
                 tileMap.getWidth() * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize(),
                 BufferedImage.TYPE_INT_ARGB);
-        copyBUFF2Dg = (Graphics2D) clear__offscreen2D.getGraphics();
+        BUFF2DgWithoutPlayer = (Graphics2D) buffered2DmapWithoutPlayer.getGraphics();
 
     }
 
+    /**
+     * Dodajemy wątek renderowania dodajemy nasłuchiwanie klawiatury
+     */
     public void addNotify() {
         super.addNotify();
-        if (thread == null) {
-            thread = new Thread(this);
-            thread.start();
+        if (renderer == null) {
+            renderer = new Thread(this);
+            renderer.start();
         }
         addKeyListener(this);
     }
 
+    /**
+     * funkcja run() startuje wątek renderer
+     */
     public void run() {
-        
+
         long startTime;
         long urdTime;
         long waitTime; // in milliseconds
         player.startTime = System.nanoTime();
         while (running) {
             startTime = System.nanoTime();
-           this.paintComponent(this.getGraphics());
-           update();
-            
+            this.paintComponent(this.getGraphics());
+            update();
+
             urdTime = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime - urdTime;
             //JOptionPane.showMessageDialog(null, 1000/waitTime); // real FPS
@@ -87,7 +114,13 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void init() {
+    /**
+     * inicjalizacja
+     *
+     * @param gameMaster - odpowiedni master gry
+     */
+    public void init(GameMaster gameMaster) {
+        //zezwolenie na odpolanie wątka
         running = true;
         // load map image
         /*
@@ -98,10 +131,10 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
          */
         //backBuffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-        //tileMap = new TileMap(new Maze(3, 15), 32);
-        tileMap = new TileMap("testmap.txt", 32);
-
+        //tworzenie obeccnej mapy w postaci tablicy
+        tileMap = gameMaster.tileMap;
+        //tileMap = new TileMap("testmap.txt", 32);
+        //ustalenie koordynat minimapy 
         tileMap.setx((int) (this.getWidth() / this.scale / 2 - (int) (tileMap.getTileSize() * 1.5)));
         tileMap.sety((int) (this.getHeight() / this.scale / 2 - (int) (tileMap.getTileSize() * 1.5)));
         buffered2Dmap = new BufferedImage(
@@ -113,25 +146,30 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
                 (int) (scale * buffered2Dmap.getHeight(null)),
                 BufferedImage.TYPE_INT_ARGB);
         scaledBUFF2Dg = (Graphics2D) scaledBuffered2Dmap.getGraphics();
-        scaledBUFF2Dg.scale(scale, scale);        
-        player = new Player(tileMap, view3d, this);
+        scaledBUFF2Dg.scale(scale, scale);
+        player = gameMaster.player;
         player.setx((int) (tileMap.getTileSize() * 1.5));
         player.sety((int) (tileMap.getTileSize() * 1.5));
         view3d.setPlayer(player);
         view3d.setTileMap(tileMap);
 
     }
-    ///////////////////////////////////////////////////////////////
 
+    /**
+     *onowienie stanu 
+     */
     private void update() {
         player.update();
+        //move the map
+        tileMap.setx((int) (this.getWidth() / this.scale / 2 - player.getx()));
+        tileMap.sety((int) (this.getHeight() / this.scale / 2 - player.gety()));
     }
 
     public void draw(Graphics2D BUFF2Dg, BufferedImage buffered2Dmap) {
         int tx = tileMap.getx();
         int ty = tileMap.gety();
 
-        copyBUFF2Dg.drawImage(buffered2Dmap, -(int) (this.getWidth() / this.scale / 2 - player.getx()), -(int) (this.getHeight() / this.scale / 2 - player.gety()), null);
+        BUFF2DgWithoutPlayer.drawImage(buffered2Dmap, -(int) (this.getWidth() / this.scale / 2 - player.getx()), -(int) (this.getHeight() / this.scale / 2 - player.gety()), null);
 
         BUFF2Dg.setColor(player.playerPointColor);
         BUFF2Dg.fillOval(
@@ -165,40 +203,45 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
                 view3d.gcOfBuffered3dView.drawImage(tmp, 0, dy, view3d.getWidth(), dy + 1, x2, (int) z, x1, (int) z + 1, null);
             }
         } else {
-            view3d.drawFloor3D();
+            view3d.drawSimpleFloor3D();
         }
-        
-         view3d.gcOfBuffered3dView.drawImage(view3d.shadeCeilFloor, 0, 0, view3d.getWidth(), view3d.getHeight(), 0, 0, view3d.shadeCeilFloor.getWidth(), view3d.shadeCeilFloor.getHeight(), null);
-        
+
+        view3d.gcOfBuffered3dView.drawImage(view3d.shadeCeilFloor, 0, 0, view3d.getWidth(), view3d.getHeight(), 0, 0, view3d.shadeCeilFloor.getWidth(), view3d.shadeCeilFloor.getHeight(), null);
+
         for (int x1 = -(view3d.getWidth() / 2), x2 = (view3d.getWidth() / 2); x1 <= 0 && x2 >= 0; x1++, x2--) {
             double left_a = Math.atan(x1 / player.distToProjectionPlane);
-            WallType LeftSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - left_a, BUFF2Dg, Color.BLUE, clear__offscreen2D);
+            WallType LeftSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - left_a, BUFF2Dg, Color.BLUE,10);
             double left_z = LeftSideCameraWallDistance.dist * Math.cos(left_a);
 
             double right_a = Math.atan(x2 / player.distToProjectionPlane);
-            WallType RightSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - right_a, BUFF2Dg, Color.BLUE, clear__offscreen2D);
+            WallType RightSideCameraWallDistance = castRay(player.getx(), player.gety(), player.cameraAngle - right_a, BUFF2Dg, Color.BLUE,10);
             double right_z = RightSideCameraWallDistance.dist * Math.cos(right_a);
-            if(transparentWalls==false){
-               view3d.drawWall3D(left_z, LeftSideCameraWallDistance.color, right_z, RightSideCameraWallDistance.color, x1 + view3d.getWidth() / 2, x2 + view3d.getWidth() / 2); 
+            if (transparentWalls == false) {
+                view3d.drawWall3D(left_z, LeftSideCameraWallDistance.color, right_z, RightSideCameraWallDistance.color, x1 + view3d.getWidth() / 2, x2 + view3d.getWidth() / 2);
             }
-            
+
         }
         // draw camera direction
-        castRay(player.getx(),player.gety(), player.cameraAngle, BUFF2Dg, Color.GREEN, clear__offscreen2D);
-//        if(draw3DWalls){
-//            view3d.gcOfBuffered3dView.setColor(Color.WHITE);
-//            view3d.gcOfBuffered3dView.fillRect(0, 0, off3Dscreen.getWidth(), off3Dscreen.getHeight());
-//        }
-        view3d.render(view3d.buffered3Dview);
+        castRay(player.getx(), player.gety(), player.cameraAngle, BUFF2Dg, Color.ORANGE,255);
+        view3d.render();
     }
-
+/**
+ * 
+ * @param cameraPositionX
+ * @param cameraPositionY
+ * @param cameraDirectionAngle
+ * @param g - grafika, w której rysujemy promieni
+ * @param rayColor - kolor promieniu, który rysujemy od grawca do ściany
+ * @param transparencyLevel - pozion przezroczystości, 0 (całkowicie przezroczysty)... 255 (nieprzezroczysty)
+ * @return WallType, czyli odległość do ściany oraz jej kolor
+ */
     private WallType castRay(
             double cameraPositionX,
             double cameraPositionY,
             double cameraDirectionAngle,
             Graphics g,
             Color rayColor,
-            BufferedImage clear__buffered2Dmap
+            int transparencyLevel
     ) {
         double s = Math.sin(cameraDirectionAngle);
         double c = Math.cos(cameraDirectionAngle);
@@ -209,12 +252,12 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
             d += 0.1;
             px = (int) (cameraPositionX + d * s);
             py = (int) (cameraPositionY + d * c);
-            currentColor = clear__buffered2Dmap.getRGB(
+            currentColor = buffered2DmapWithoutPlayer.getRGB(
                     (int) (px),
                     (int) (py)
             );
         } while (currentColor != Color.BLACK.getRGB());
-        g.setColor(new Color(rayColor.getRed(), rayColor.getGreen(), rayColor.getBlue(), 10));
+        g.setColor(new Color(rayColor.getRed(), rayColor.getGreen(), rayColor.getBlue(), transparencyLevel));
         g.drawLine((int) cameraPositionX + tileMap.getx(), (int) cameraPositionY + tileMap.gety(), (int) (cameraPositionX + d * s) + tileMap.getx(), (int) (cameraPositionY + d * c) + tileMap.gety());
         WallType result = new WallType();
         result.dist = d;
@@ -222,48 +265,38 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         return result;
     }
 
+    @Override
     public synchronized void paintComponent(Graphics g) {
 
         tileMap.draw(BUFF2Dg);
-
 //        try {
 //            ImageIO.write(image, "PNG", new File("filename1.png"));
 //        } catch (IOException ex) {
 //            Logger.getLogger(MiniMap.class.getName()).log(Level.SEVERE, null, ex);
 //        }
         draw(BUFF2Dg, buffered2Dmap);
-        
+
         scaledBUFF2Dg.drawImage(buffered2Dmap, 0, 0, null);
         g.drawImage(scaledBuffered2Dmap, 0, 0, null);
     }
 
+    @Override
     public void keyTyped(KeyEvent key) {
     }
 
+    @Override
     public void keyPressed(KeyEvent key) {
         //activateSecond
         if (key.getKeyChar() == '\\') {
-            if (activateSecond) {
-                activateSecond = false;
-            } else {
-                activateSecond = true;
-            }
+            activateSecond = !activateSecond;
         }
         //make 3D walls transparent
         if (key.getKeyChar() == '`') {
-            if (transparentWalls) {
-                transparentWalls = false;
-            } else {
-                transparentWalls = true;
-            }
+            transparentWalls = !transparentWalls;
         }
         //switch on rotation with mouse
         if (key.getKeyChar() == '\'') {
-            if (player.rotateWithMouse) {
-                player.rotateWithMouse = false;
-            } else {
-                player.rotateWithMouse = true;
-            }
+            player.rotateWithMouse = !player.rotateWithMouse;
         }
         //left
         if ((key.getKeyCode() == 37 || key.getKeyCode() == 65)) {
@@ -289,16 +322,17 @@ public class MiniMap extends JPanel implements Runnable, KeyListener {
         }
         //teleport up
         if (key.getKeyChar() == '+') {
-            player.teleport(tileMap.upTeleport);
+            player.teleport(TileMap.upTeleport);
         }
         //teleport down
         if (key.getKeyChar() == '-') {
-            player.teleport(tileMap.downTeleport);
+            player.teleport(TileMap.downTeleport);
 
         }
         repaint();
     }
 
+    @Override
     public void keyReleased(KeyEvent key) {
         //left
         if ((key.getKeyCode() == 37 || key.getKeyCode() == 65)) {

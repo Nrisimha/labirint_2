@@ -32,8 +32,10 @@ public class Vizualization {
         view3d.setBounds(0, 0, window.getWidth(), window.getHeight());
         //set view3d as not transparent for drawing
         view3d.setOpaque(true);
-
-        MiniMap miniMap = new MiniMap(view3d, 200, 200, 0.3);
+        TileMap tileMap;
+        tileMap = new TileMap(MazeGenerator.generate(3, 15), 32);
+        GameMaster gameMaster = new GameMaster(new Player(tileMap, view3d),tileMap);
+        MiniMap miniMap = new MiniMap(view3d, 200, 200, 0.3, gameMaster);
         miniMap.setBounds(0, 0, 200, 200);
         //set miniMap as not transparent for drawing
         miniMap.setOpaque(true);

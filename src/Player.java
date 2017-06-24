@@ -19,14 +19,12 @@ public class Player {
 
     private TileMap tileMap;
     private View3D view3d;
-    private MiniMap miniMap;
 
     private int mouseXLastPosition;
 
-    public Player(TileMap tm, View3D view3d, MiniMap miniMap) {
+    public Player(TileMap tm, View3D view3d) {
         this.tileMap = tm;
         this.view3d = view3d;
-        this.miniMap = miniMap;
         right = false;
         left = false;
         up = false;
@@ -39,10 +37,9 @@ public class Player {
         mouseXLastPosition = 0;// (view3d.getLocationOnScreen().x+view3d.getWidth()/2 - MouseInfo.getPointerInfo().getLocation().x);
     }
 
-    public Player(TileMap tm, View3D view3d, MiniMap miniMap, double moveSpeed, double rotateSpeed) {
+    public Player(TileMap tm, View3D view3d, double moveSpeed, double rotateSpeed) {
         this.tileMap = tm;
         this.view3d = view3d;
-        this.miniMap = miniMap;
         right = false;
         left = false;
         up = false;
@@ -148,9 +145,6 @@ public class Player {
             }
         }
         mouseXLastPosition = mouseXPlace;
-        //move the map
-        tileMap.setx((int) (miniMap.getWidth() / miniMap.scale / 2 - x));
-        tileMap.sety((int) (miniMap.getHeight() / miniMap.scale / 2 - y));
     }
 
     public void teleport(int teleportType) {
