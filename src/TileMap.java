@@ -108,7 +108,9 @@ public class TileMap {
     public int getTile(int row, int col) {
         return map[row][col];
     }
-
+    public void setTile(int row, int col, int value) {
+         map[row][col]=value;
+    }
     public int getTileSize() {
         return tileSize;
     }
@@ -128,7 +130,7 @@ public class TileMap {
     public void sety(int i) {
         y = i;
     }
-
+    
     public void draw(Graphics2D g) {
         for (int row = 0; row < mapHeight; row++) {
             for (int col = 0; col < mapWidth; col++) {

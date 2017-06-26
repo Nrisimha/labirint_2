@@ -16,7 +16,7 @@ public class Vizualization {
     private static int deffaultHeight = 600;
     public static JFrame window;
 
-    public static void main(String args[]) {
+    public Vizualization(Maze maze) {
         window = new JFrame("L.A.B.I.R.Y.N.T.");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLayout(new BorderLayout());
@@ -33,9 +33,9 @@ public class Vizualization {
         //set view3d as not transparent for drawing
         view3d.setOpaque(true);
         TileMap tileMap;
-        tileMap = new TileMap(MazeGenerator.generate(3, 15), 32);
+        tileMap = new TileMap(maze,32);//MazeGenerator.generate(3, 15), 32);
         GameMaster gameMaster = new GameMaster(new Player(tileMap, view3d),tileMap);
-        MiniMap miniMap = new MiniMap(view3d, 200, 200, 0.3, gameMaster);
+        MiniMapWithPlayer miniMap = new MiniMapWithPlayer(view3d, 200, 200, 0.3, gameMaster);
         miniMap.setBounds(0, 0, 200, 200);
         //set miniMap as not transparent for drawing
         miniMap.setOpaque(true);

@@ -185,9 +185,9 @@ public class Maze {
     public int[][] getLevel(int... k) {
         switch(k.length) {
             case 1:
-                return maze[0][k[0]];
+                return maze[0][k[0]].clone();
             case 2:
-                return maze[k[0]][k[1]];
+                return maze[k[0]][k[1]].clone();
             default:
                 return null;
         }
@@ -216,7 +216,7 @@ public class Maze {
     }
     
     private void check4DTransition() {}
-    
+    /*
     public static void main(String[] args) {
         final int X = 17, Y=17, Z=17;
         Maze maze = new Maze(2, 61);
@@ -230,5 +230,5 @@ public class Maze {
             }
             System.out.println();
         }
-    }
+    }*/
 }
