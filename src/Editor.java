@@ -39,8 +39,7 @@ public class Editor extends javax.swing.JFrame {
         
     }
     
-   
-    
+
                    
     private void initComponents()  {
         
@@ -153,7 +152,7 @@ public class Editor extends javax.swing.JFrame {
         File.add(Save);
         MenuBar.add(File);
         Exit.setText("Wyjście");
-        Exit_full.setText("Do windows");
+        Exit_full.setText("Zakończ");
         Exit.add(Exit_full);
         Exit_To_Menu.setText("Do menu");
         Exit.add(Exit_To_Menu);

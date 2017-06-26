@@ -1,9 +1,11 @@
+
+
 import java.util.Random;
 import java.util.Stack;
 
 /**
  *
- * @author PiotrRadosław
+ * @author Piotr Bartman
  */
 public abstract class MazeGenerator {
     private static Maze maze = null;
@@ -30,6 +32,7 @@ public abstract class MazeGenerator {
      * @return Maze
      */
     public static Maze generate(int dimension, int size, int... transistionDensity) {
+        if (transistionDensity == null) transistionDensity = new int[0];
         if (transistionDensity.length > 0) 
             cubeDen = Math.min(transistionDensity[0],(int)(size*size/4));
         else 
@@ -52,10 +55,14 @@ public abstract class MazeGenerator {
         
         generateColumns();
         if (dimension >= 3) generate3DTransition();
-        if (dimension == 4) generate4DTransition();
+        //if (dimension == 4) generate4DTransition();
         generateCorridors();
         maze.set(Maze.START,0,0,1,1);
-        maze.set(Maze.END,dimension<4?0:inverse(0),size-1,size-2,size-2);
+        maze.set(Maze.END,
+                maze.getDimension()<4?0:inverse(0),
+                maze.getDimension()<3?0:maze.getSize()-1,
+                maze.getSize()-2,
+                maze.getSize()-2);
         
         maze = null;
         return m;
@@ -247,6 +254,7 @@ public abstract class MazeGenerator {
                     break;
             }
         }
+        erase0();
     }
     private static class Point {
         public int c = 0;
@@ -259,6 +267,20 @@ public abstract class MazeGenerator {
             this.l = p.l;
             this.x = p.x;
             this.y = p.y;
+        }
+    }
+    private static void erase0() {
+        int cubeNum = (maze.getDimension()==4) ? 8 : 1;
+        int lvlNum = (maze.getDimension()>=3) ? maze.getSize() : 1;
+        for (int i0=0; i0<cubeNum; i0++) {//cubes
+            for (int i1=0; i1<lvlNum; i1++) {//levels
+                for (int i2=0; i2<maze.getSize(); i2++) {
+                    for (int i3=0; i3<maze.getSize(); i3++) {
+                        if (maze.get(i0, i1, i2, i3) == 0)
+                            maze.set(Maze.WALL,i0, i1, i2, i3);
+                    }
+                }
+            }
         }
     }
     private static int checkDirection(int r, int... fields) {
@@ -298,5 +320,20 @@ public abstract class MazeGenerator {
                 default:
                     return 4;
             }
+    }
+    
+    public static int getCubeDen() {
+        return cubeDen;
+    }
+    
+    public static int getCubeDenDelta() {
+        return cubeDenDelta;
+    }
+    
+    public static int getTessDen() {
+        return tessDen;
+    }
+    public static int getTessDenDelta() {
+        return tessDenDelta;
     }
 }

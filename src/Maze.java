@@ -4,12 +4,13 @@
  * and open the template in the editor.
  */
 
+
 /**
  * Klasa Maze przechowuje labirynt w postaci tablicy int[][][][]
  * @author Piotr Bartman
  */
 public class Maze {
-    private int maze[][][][];
+    private final int maze[][][][];
     private int dimension = 0;
     /**wartość domyślna size = 5*/
     private int size = 5;
@@ -30,16 +31,16 @@ public class Maze {
     
     
     public Maze(int dimension, int size) {
-        if (dimension < 2) this.dimension = 2;
-        else if (dimension > 4) this.dimension = 4;
+        if (dimension <= 2) this.dimension = 2;
+        else if (dimension >= 4) this.dimension = 4;
         else this.dimension = dimension;
         
         if (size%2 == 0) size--;
         if (size > 4) this.size = size;
         else size = this.size;
         
-        maze = new int[dimension==4 ? size : 1][dimension>=3 ? size : 1][size][size];
-        
+        maze = new int[this.dimension==4 ? 8 : 1][this.dimension>=3 ? size : 1][size][size];
+
         generateFrames();
     }
     
@@ -58,7 +59,7 @@ public class Maze {
         else if (size%2 == 0) this.size = size-1;
         else this.size = size;
         
-        int c = dimension==4 ? this.size : 1;
+        int c = dimension==4 ? 8 : 1;
         int l = dimension>=3 ? this.size : 1;
         maze = new int[c][l][this.size][this.size];
         for (int i=0; i<c; i++) {
@@ -137,43 +138,28 @@ public class Maze {
                 i=m[0]; j=m[1]; k=m[2]; h=m[3];
         }
         
+        if (check(n) || n==-UP || n==-DOWN) maze[i][j][k][h] = n;
+        else maze[i][j][k][h] = FLOOR;
+    }
+    
+    /**
+     * Metoda sprawdza czy zadana wartość należy do elementów Maze.
+     * @param n
+     * @return
+     */
+    public static boolean check(int n) {
         switch (n) {
-            case START:
-                maze[i][j][k][h] = START;
-                break;
-            case END:
-                maze[i][j][k][h] = END;
-                break;
-            case DOOR:
-                maze[i][j][k][h] = DOOR;
-                break;
-            case WALL:
-                maze[i][j][k][h] = WALL;
-                break;
-            case HARDWALL:
-                maze[i][j][k][h] = HARDWALL;
-                break;
-            case UP:
-                maze[i][j][k][h] = UP;
-                break;
-            case -UP:
-                maze[i][j][k][h] = -UP;
-                break;
-            case DOWN:
-                maze[i][j][k][h] = DOWN;
-                break;
-            case -DOWN:
-                maze[i][j][k][h] = -DOWN;
-                break;
-            case DOORUP:
-                maze[i][j][k][h] = DOORUP;
-                break;
-            case DOORDOWN:
-                maze[i][j][k][h] = DOORDOWN;
-                break;
-            default:
-                maze[i][j][k][h] = FLOOR;
-                break;
+            case FLOOR: return true;
+            case START: return true;
+            case END: return true;
+            case DOOR: return true;
+            case WALL: return true;
+            case HARDWALL: return true;
+            case UP: return true;
+            case DOWN: return true;
+            case DOORUP: return true;
+            case DOORDOWN: return true;
+            default: return false;
         }
     }
     
@@ -216,7 +202,7 @@ public class Maze {
     }
     
     private void check4DTransition() {}
-    /*
+    
     public static void main(String[] args) {
         final int X = 17, Y=17, Z=17;
         Maze maze = new Maze(2, 61);
@@ -230,5 +216,5 @@ public class Maze {
             }
             System.out.println();
         }
-    }*/
+    }
 }
