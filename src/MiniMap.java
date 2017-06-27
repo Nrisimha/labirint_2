@@ -36,7 +36,6 @@ public class MiniMap extends JPanel implements Runnable {
         requestFocus();
         init();
     }
-
     /**
      * Dodajemy wątek renderowania dodajemy nasłuchiwanie klawiatury
      */
@@ -74,7 +73,7 @@ public class MiniMap extends JPanel implements Runnable {
 
         public void init() {
         running = true;
-        tileMap = new TileMap("testmap.txt", 32);
+        tileMap = new TileMap(32);
         buffered2Dmap = new BufferedImage(
                 tileMap.getWidth() * tileMap.getTileSize(), tileMap.getHeight() * tileMap.getTileSize(),
                 BufferedImage.TYPE_3BYTE_BGR);

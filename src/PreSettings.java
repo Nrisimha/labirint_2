@@ -60,9 +60,22 @@ public class PreSettings extends JFrame {
                 if (!openGame) {
                     java.awt.EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            JOptionPane.showMessageDialog(null, "Tego jeszcze nie napisali!");
-                            /*game = new Vizualization(MazeGenerator.generate((int)mazeDimentionList.getSelectedItem(),(int)mazeSizeList.getSelectedItem()));
-                            openGame = true;*/
+
+                            MazeFile m = new MazeFile();
+                            String path;
+                            //Create a file chooser
+                            JFileChooser fc = new JFileChooser();
+                            int returnVal = fc.showOpenDialog(null);
+                            //path = JOptionPane.showInputDialog("Podaj ścieżkę");
+                            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                                Maze newMaze = m.load(fc.getSelectedFile().getName());
+                                if (newMaze != null) {
+                                    tmp.setVisible(false);
+                                    game = new Vizualization(newMaze);
+                                    //game.setVisible(true);  
+                                    openGame = true;
+                                }
+                            }
                         }
                     });
                 } else {

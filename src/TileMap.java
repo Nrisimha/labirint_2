@@ -1,8 +1,5 @@
 
-import java.io.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.net.URL;
 
 /**
  * Klasa przechowyje obecny poziom labiryntu
@@ -13,7 +10,7 @@ public class TileMap {
 
     private int x;
     private int y;
-    private Maze maze;
+    public Maze maze;
     private int currentLevel;
     private int tileSize;
     private int[][] map;
@@ -28,12 +25,15 @@ public class TileMap {
 
     /**
      *
-     * @param pathToLevel - ścieżka do pliku, gdzie leży poziom labiryntu
      * @param tileSize
      */
-    public TileMap(String pathToLevel, int tileSize) {
+    public TileMap(int tileSize) {
         this.tileSize = tileSize;
-
+        maze = MazeGenerator.generate(2, 31);
+        map = maze.getLevel(0);
+        mapWidth = 31;
+        mapHeight = 31;
+        /*
         try {
             URL path = TileMap.class.getResource(pathToLevel);
             File f = new File(path.getFile());
@@ -52,8 +52,9 @@ public class TileMap {
             }
         } catch (Exception e) {
         }
+        */
     }
-
+    
     public TileMap(Maze maze, int tileSize) {
         this.tileSize = tileSize;
         this.maze = maze;
@@ -64,7 +65,12 @@ public class TileMap {
         mapWidth = map[0].length;
         mapHeight = map.length;
     }
-
+    public void reload(){
+        map =  maze.getLevel(0);
+        mapWidth = map[0].length;
+        mapHeight = map.length;
+        currentLevel =0;
+    }
     public boolean loadNextLevel() {
         int[][] level = maze.getLevel(++currentLevel);
         if (level == null) {
@@ -122,7 +128,15 @@ public class TileMap {
     public int getWidth() {
         return mapWidth;
     }
-
+    public void setHeight(int height) {
+        mapHeight = height;
+    }
+    public void setWidth(int width) {
+        mapWidth = width;
+    }
+    public void setTileSize(int size) {
+        tileSize = size;
+    }
     public void setx(int i) {
         x = i;
     }

@@ -10,6 +10,7 @@
  */
 public interface FileAdapter {
 
+
     /**
      *
      * @param path

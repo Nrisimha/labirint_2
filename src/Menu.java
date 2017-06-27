@@ -112,5 +112,5 @@ public class Menu extends javax.swing.JFrame {
         getAccessibleContext().setAccessibleDescription("Menu");
         setTitle("Menu L.A.B.I.R.Y.N.T.");
         pack();
-    }
+    }                   
 }

@@ -28,7 +28,7 @@ public class Vizualization {
 
         window.add(mainPanel, BorderLayout.CENTER);
 
-        View3D view3d = new View3D(window.getWidth(), window.getHeight());
+        final View3D view3d = new View3D(window.getWidth(), window.getHeight());
         view3d.setBounds(0, 0, window.getWidth(), window.getHeight());
         //set view3d as not transparent for drawing
         view3d.setOpaque(true);
