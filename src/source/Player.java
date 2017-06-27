@@ -1,6 +1,5 @@
 package source;
 
-
 import java.awt.*;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -168,9 +167,9 @@ public class Player {
             //finish game
             Object[] options = {"Yes, I do",
                 "No, I don't have a life",
-            "Just leave me alone!"};
+                "Just leave me alone!"};
             int n = JOptionPane.showOptionDialog(null,//parent container of JOptionPane
-                    "Did you lose "+getElapsedTime(startTime, System.nanoTime()) + " of your life to walking in empty maze?",
+                    "Did you lose " + getElapsedTime(startTime, System.nanoTime()) + " of your life to walking in empty maze?",
                     "A Silly Question",
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE,
@@ -191,31 +190,31 @@ public class Player {
         if (difference > 60) {
             minHourDay++;
             difference /= 60;
-            if (difference > 60){
+            if (difference > 60) {
                 minHourDay++;
                 difference /= 60;
-                if (difference > 24){
+                if (difference > 24) {
                     minHourDay++;
                     difference /= 24;
                 }
             }
         }
-        switch(minHourDay){
+        switch (minHourDay) {
             case 3:
-                str += (int)(difference) + "d ";
+                str += (int) (difference) + "d ";
                 difference *= 24;
                 difference %= 24;
             case 2:
-                str += (int)(difference) + "h ";
+                str += (int) (difference) + "h ";
                 difference *= 60;
                 difference %= 60;
             case 1:
-                str += (int)(difference) + "m ";
+                str += (int) (difference) + "m ";
                 difference *= 60;
                 difference %= 60;
             case 0:
                 str += df.format(difference) + "s";
         }
-        return str.equals("0s")?"<1s":str;
+        return str.equals("0s") ? "<1s" : str;
     }
 }
